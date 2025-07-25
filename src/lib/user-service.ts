@@ -1,11 +1,20 @@
-import { db, auth } from '@/lib/firebase';
+import { db, auth, storage } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, DocumentData } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { studentProfile, type Student } from './data';
 
 export interface UserData extends Student, DocumentData {
   savedJobs: number[];
   appliedJobs: number[];
   uid: string;
+}
+
+export async function uploadProfilePhoto(userId: string, file: File): Promise<string> {
+    const filePath = `avatars/${userId}/${file.name}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
 }
 
 export async function getUserData(userId: string): Promise<UserData | null> {
@@ -50,7 +59,7 @@ export async function createUserDoc(userId: string, email: string): Promise<User
   return newUser;
 }
 
-export async function updateUserProfile(userId: string, data: Partial<Student>) {
+export async function updateUserProfile(userId: string, data: Partial<UserData>) {
     const userDocRef = doc(db, 'users', userId);
     await updateDoc(userDocRef, data);
 }

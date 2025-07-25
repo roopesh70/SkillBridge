@@ -23,17 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { updateUserProfile, type UserData } from "@/lib/user-service";
-import { useState } from "react";
+import { updateUserProfile, uploadProfilePhoto, type UserData } from "@/lib/user-service";
+import { useState, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Icons } from "./icons";
 import { Separator } from "./ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   major: z.string().min(2, "Major must be at least 2 characters."),
   university: z.string().min(2, "University must be at least 2 characters."),
   bio: z.string().max(300, "Bio cannot exceed 300 characters.").optional(),
+  avatarUrl: z.string().optional(),
   skills: z.array(z.string()).optional(),
   experience: z.array(z.object({
     title: z.string(),
@@ -59,6 +61,13 @@ interface EditProfileDialogProps {
 export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditProfileDialogProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('');
+  }
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -67,6 +76,7 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
       major: user.major,
       university: user.university,
       bio: user.bio,
+      avatarUrl: user.avatarUrl,
       skills: user.skills,
       experience: user.experience,
       certifications: user.certifications,
@@ -88,11 +98,29 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
     name: "certifications",
   });
 
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSaving(true);
     try {
-      await updateUserProfile(user.uid, data);
+      let avatarUrl = user.avatarUrl;
+      if (avatarFile) {
+        avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
+      }
+      
+      const updatedData = { ...data, avatarUrl };
+
+      await updateUserProfile(user.uid, updatedData);
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
@@ -122,6 +150,22 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <ScrollArea className="h-[60vh] pr-6">
             <div className="space-y-6 p-1">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={avatarPreview || ''} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                  <Button type="button" onClick={() => fileInputRef.current?.click()}>
+                    Change Photo
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
