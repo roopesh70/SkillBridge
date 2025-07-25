@@ -38,28 +38,29 @@ export default function ProfilePage() {
 
   const handleProfileUpdate = async (updatedData: Partial<UserData>, avatarFile: File | null) => {
     if (!user) return;
-
-    setLoading(true);
     
     try {
-        // Update text-based fields immediately
+        // Optimistically update UI with text changes and close dialog
+        setEditDialogOpen(false);
+        setUserData(prev => prev ? { ...prev, ...updatedData } : null);
+        
+        // Update text-based fields in the background
         await updateUserProfile(user.uid, updatedData);
+        
         toast({
             title: "Profile Updated",
             description: "Your profile information has been saved.",
         });
 
-        // Close dialog and optimistically update UI with text changes
-        setEditDialogOpen(false);
-        setUserData(prev => prev ? { ...prev, ...updatedData } : null);
-
         // Handle file upload in the background
         if (avatarFile) {
             const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
             await updateUserProfile(user.uid, { avatarUrl });
+            
             // This second update will refresh the UI with the new image
             setUserData(prev => prev ? { ...prev, avatarUrl } : null);
-             toast({
+            
+            toast({
                 title: "Photo Updated",
                 description: "Your new profile photo has been saved.",
             });
@@ -70,8 +71,7 @@ export default function ProfilePage() {
             description: "There was an error updating your profile.",
             variant: "destructive",
         });
-    } finally {
-        // Refetch all data to be sure
+        // Refetch all data to be sure we have the correct state after an error
         await fetchUserData();
     }
   }
