@@ -74,8 +74,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      // Create user document in the background after redirecting
-      createUserDoc(userCredential.user.uid, userCredential.user.email || '');
+      // Wait for the user document to be created before redirecting
+      await createUserDoc(userCredential.user.uid, userCredential.user.email || '');
       router.push("/");
     } catch (error: any) {
       toast({
