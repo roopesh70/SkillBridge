@@ -27,14 +27,14 @@ export default function Home() {
       if (user) {
         const data = await getUserData(user.uid);
         setUserData(data);
+        setLoading(false);
       } else {
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (!authLoading) {
-      setLoading(true);
       fetchUserData();
     }
   }, [user, authLoading]);
@@ -93,6 +93,7 @@ export default function Home() {
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground">Find Your Next Opportunity</h1>
         <p className="text-lg text-muted-foreground mt-2">Connecting talented students with innovative companies.</p>
+        <p className="text-xl text-accent-foreground font-semibold mt-4 italic">"Skill your future"</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {jobs.map((job) => (
