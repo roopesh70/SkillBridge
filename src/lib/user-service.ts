@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, DocumentData } from 'firebase/firestore';
 import { studentProfile, type Student } from './data';
 
@@ -9,6 +9,11 @@ export interface UserData extends Student, DocumentData {
 }
 
 export async function getUserData(userId: string): Promise<UserData | null> {
+  // Ensure there is a logged-in user before fetching
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    // console.log("User not authenticated or ID mismatch, skipping fetch.");
+    return null;
+  }
   const userDocRef = doc(db, 'users', userId);
   const userDoc = await getDoc(userDocRef);
   if (userDoc.exists()) {

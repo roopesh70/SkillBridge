@@ -23,17 +23,18 @@ export function Header() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setDataLoading(true);
       if (user) {
         const data = await getUserData(user.uid);
         setUserData(data);
       } else {
         setUserData(null);
       }
-      setLoading(false);
+      setDataLoading(false);
     };
     
     if (!authLoading) {
@@ -43,16 +44,17 @@ export function Header() {
 
   const getInitials = (name: string) => {
     if (!name) return "U";
-    return name.split(' ').map(n => n[0]).join('');
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   const handleLogout = async () => {
     await signOut(auth);
+    setUserData(null);
     router.push('/login');
   };
 
   const renderUserAuth = () => {
-    if (authLoading || loading) {
+    if (authLoading || dataLoading) {
       return <Icons.spinner className="animate-spin" />;
     }
 
