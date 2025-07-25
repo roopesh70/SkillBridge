@@ -23,15 +23,17 @@ export default function ProfilePage() {
 
   const fetchUserData = async () => {
     if (user) {
+      setLoading(true);
       const data = await getUserData(user.uid);
       setUserData(data);
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     if (!authLoading) {
-        setLoading(true);
         fetchUserData();
     }
   }, [user, authLoading]);
@@ -39,39 +41,32 @@ export default function ProfilePage() {
   const handleProfileUpdate = async (updatedData: Partial<UserData>, avatarFile: File | null) => {
     if (!user) return;
     
+    setLoading(true);
     try {
-        // Optimistically update UI with text changes and close dialog
         setEditDialogOpen(false);
-        setUserData(prev => prev ? { ...prev, ...updatedData } : null);
         
-        // Update text-based fields in the background
+        // Update text-based fields
         await updateUserProfile(user.uid, updatedData);
+        
+        // Handle file upload
+        if (avatarFile) {
+            const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
+            await updateUserProfile(user.uid, { avatarUrl });
+        }
         
         toast({
             title: "Profile Updated",
             description: "Your profile information has been saved.",
         });
 
-        // Handle file upload in the background
-        if (avatarFile) {
-            const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
-            await updateUserProfile(user.uid, { avatarUrl });
-            
-            // This second update will refresh the UI with the new image
-            setUserData(prev => prev ? { ...prev, avatarUrl } : null);
-            
-            toast({
-                title: "Photo Updated",
-                description: "Your new profile photo has been saved.",
-            });
-        }
     } catch (error) {
          toast({
             title: "Update Failed",
             description: "There was an error updating your profile.",
             variant: "destructive",
         });
-        // Refetch all data to be sure we have the correct state after an error
+    } finally {
+        // Refetch all data to ensure UI is in sync
         await fetchUserData();
     }
   }
