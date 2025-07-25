@@ -8,16 +8,17 @@ import { Separator } from "./ui/separator";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import { JobDetailsDialog } from "./job-details-dialog";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/context/user-context";
 
 interface JobCardProps {
   job: Job;
-  studentProfile: string;
   isSaved: boolean;
   onSaveToggle: (jobId: number) => void;
   isLoggedIn: boolean;
 }
 
-export function JobCard({ job, studentProfile, isSaved, onSaveToggle, isLoggedIn }: JobCardProps) {
+export function JobCard({ job, isSaved, onSaveToggle, isLoggedIn }: JobCardProps) {
+  const { studentProfileString } = useUser();
   return (
     <Card className="flex flex-col h-full transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl">
       <CardHeader>
@@ -60,7 +61,7 @@ export function JobCard({ job, studentProfile, isSaved, onSaveToggle, isLoggedIn
           <DialogTrigger asChild>
             <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
           </DialogTrigger>
-          <JobDetailsDialog job={job} studentProfile={studentProfile} isSaved={isSaved} onSaveToggle={onSaveToggle} isLoggedIn={isLoggedIn} />
+          <JobDetailsDialog job={job} studentProfile={studentProfileString} isSaved={isSaved} onSaveToggle={onSaveToggle} isLoggedIn={isLoggedIn} />
         </Dialog>
       </CardFooter>
     </Card>
