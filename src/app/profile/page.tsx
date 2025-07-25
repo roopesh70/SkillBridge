@@ -34,6 +34,7 @@ export default function ProfilePage() {
   }, [user, authLoading]);
 
   const handleProfileUpdate = () => {
+    setLoading(true);
     fetchUserData(); // Refetch user data after update
   }
 

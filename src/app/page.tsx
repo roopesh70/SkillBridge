@@ -24,17 +24,17 @@ export default function Home() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true);
       if (user) {
         const data = await getUserData(user.uid);
         setUserData(data);
       } else {
         setUserData(null);
       }
-      setLoading(false); // Set loading to false after user check and data fetch
+      setLoading(false);
     };
 
     if (!authLoading) {
+      setLoading(true);
       fetchUserData();
     }
   }, [user, authLoading]);
