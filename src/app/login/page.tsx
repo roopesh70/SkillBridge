@@ -79,8 +79,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      await createUserDoc(userCredential.user.uid);
       router.push("/");
+      // Create user document in the background after redirecting
+      createUserDoc(userCredential.user.uid);
     } catch (error: any) {
       toast({
         title: "Sign Up Failed",
