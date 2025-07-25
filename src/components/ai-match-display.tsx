@@ -10,22 +10,31 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./
 interface AiMatchDisplayProps {
   jobDescription: string;
   studentProfile: string;
+  isLoggedIn: boolean;
 }
 
-export function AiMatchDisplay({ jobDescription, studentProfile }: AiMatchDisplayProps) {
+export function AiMatchDisplay({ jobDescription, studentProfile, isLoggedIn }: AiMatchDisplayProps) {
   const [matchData, setMatchData] = useState<JobMatchingOutput | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchMatchData() {
+      if (!isLoggedIn) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const data = await getMatchDetails({ jobDescription, studentProfile });
       setMatchData(data);
       setLoading(false);
     }
     fetchMatchData();
-  }, [jobDescription, studentProfile]);
+  }, [jobDescription, studentProfile, isLoggedIn]);
 
+  if (!isLoggedIn) {
+    return <div className="text-sm text-muted-foreground">Log in to see your AI Match Score</div>;
+  }
+  
   if (loading) {
     return (
       <div className="w-full space-y-2">

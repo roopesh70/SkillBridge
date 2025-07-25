@@ -122,11 +122,7 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle, i
         </div>
         <Separator />
          <div className="w-full">
-            {isLoggedIn ? (
-                <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
-            ) : (
-                <div className="text-sm text-muted-foreground">Log in to see your AI Match Score</div>
-            )}
+            <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} isLoggedIn={isLoggedIn} />
         </div>
       </div>
       <div className="flex justify-end gap-2">

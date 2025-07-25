@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { AiMatchDisplay } from "./ai-match-display";
 import { Separator } from "./ui/separator";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import { JobDetailsDialog } from "./job-details-dialog";
@@ -53,11 +52,9 @@ export function JobCard({ job, studentProfile, isSaved, onSaveToggle, isLoggedIn
       </CardContent>
       <Separator className="my-4"/>
       <CardFooter className="flex flex-col items-start gap-4">
-        {isLoggedIn ? (
-          <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
-        ) : (
-          <div className="text-sm text-muted-foreground">Log in to see your AI Match Score</div>
-        )}
+         <div className="text-sm text-muted-foreground w-full">
+            {isLoggedIn ? 'View details for AI Match Score' : 'Log in to see your AI Match Score'}
+        </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
