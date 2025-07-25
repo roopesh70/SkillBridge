@@ -5,6 +5,8 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { AiMatchDisplay } from "./ai-match-display";
 import { Separator } from "./ui/separator";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { JobDetailsDialog } from "./job-details-dialog";
 
 interface JobCardProps {
   job: Job;
@@ -30,7 +32,7 @@ export function JobCard({ job, studentProfile }: JobCardProps) {
           </div>
         </div>
         <div className="mb-4">
-          <p className="text-sm text-muted-foreground">{job.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-3">{job.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {job.skills.map((skill) => (
@@ -41,7 +43,12 @@ export function JobCard({ job, studentProfile }: JobCardProps) {
       <Separator className="my-4"/>
       <CardFooter className="flex flex-col items-start gap-4">
         <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
-        <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
+          </DialogTrigger>
+          <JobDetailsDialog job={job} studentProfile={studentProfile} />
+        </Dialog>
       </CardFooter>
     </Card>
   );
