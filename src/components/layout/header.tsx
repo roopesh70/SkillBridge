@@ -1,10 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
-import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import {
@@ -16,32 +16,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getUserData, type UserData } from "@/lib/user-service";
+import { useUser } from "@/context/user-context";
 
 export function Header() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userData, loading } = useUser();
   const router = useRouter();
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setDataLoading(true);
-      if (user) {
-        const data = await getUserData(user.uid);
-        setUserData(data);
-      } else {
-        setUserData(null);
-      }
-      setDataLoading(false);
-    };
-    
-    if (!authLoading) {
-      fetchUserData();
-    }
-  }, [user, authLoading]);
-
+  
   const getInitials = (name: string) => {
     if (!name) return "U";
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -49,12 +29,11 @@ export function Header() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    setUserData(null);
     router.push('/login');
   };
 
   const renderUserAuth = () => {
-    if (authLoading || dataLoading) {
+    if (loading) {
       return <Icons.spinner className="animate-spin" />;
     }
 

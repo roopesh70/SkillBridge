@@ -64,7 +64,7 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('');
+    return name ? name.split(' ').map(n => n[0]).join('') : '';
   }
   
   const form = useForm<ProfileFormValues>({
@@ -109,8 +109,8 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSaving(true);
+    // The parent now handles all backend communication
     onProfileUpdate(data, avatarFile);
-    // The parent component now handles closing and state updates
   };
 
   return (

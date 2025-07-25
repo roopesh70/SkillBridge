@@ -3,42 +3,16 @@
 
 import { JobCard } from "@/components/job-card";
 import { jobs } from "@/lib/data";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { getUserData, saveJob, unsaveJob, type UserData } from "@/lib/user-service";
 import { Icons } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/context/user-context";
+import { unsaveJob, saveJob } from "@/lib/user-service";
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userData, loading, studentProfileString, setUserData } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Combine student profile data into a single string for the AI prompt
-  const studentProfileString = userData 
-    ? `Skills: ${userData.skills.join(', ')}; Experience: ${userData.experience.map(e => `${e.title} at ${e.company}`).join('; ')}; Preferences: flexible schedule, remote work.`
-    : "";
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user) {
-        const data = await getUserData(user.uid);
-        setUserData(data);
-        setLoading(false);
-      } else {
-        setUserData(null);
-        setLoading(false);
-      }
-    };
-
-    if (!authLoading) {
-      fetchUserData();
-    }
-  }, [user, authLoading]);
 
   const handleSaveToggle = async (jobId: number) => {
     if (!user) {
@@ -51,17 +25,16 @@ export default function Home() {
       return;
     }
   
-    const isSaved = userData?.savedJobs.includes(jobId) || false;
+    if (!userData) return;
+
+    const isSaved = userData.savedJobs.includes(jobId);
     const originalUserData = userData;
   
     // Optimistically update UI
     const newSavedJobs = isSaved 
-      ? userData!.savedJobs.filter(id => id !== jobId)
-      : [...(userData?.savedJobs || []), jobId];
-    setUserData(prev => {
-        if (!prev) return null;
-        return { ...prev, savedJobs: newSavedJobs };
-    });
+      ? userData.savedJobs.filter(id => id !== jobId)
+      : [...userData.savedJobs, jobId];
+    setUserData({ ...userData, savedJobs: newSavedJobs });
 
     try {
       if (isSaved) {
@@ -81,7 +54,7 @@ export default function Home() {
     }
   };
   
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
         <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
