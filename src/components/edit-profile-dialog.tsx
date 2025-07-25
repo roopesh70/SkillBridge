@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, useFieldArray } from "react-hook-form";
@@ -112,30 +113,37 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSaving(true);
-    try {
-      let avatarUrl = user.avatarUrl;
-      if (avatarFile) {
-        avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
-      }
-      
-      const updatedData = { ...data, avatarUrl };
 
-      await updateUserProfile(user.uid, updatedData);
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
-      onProfileUpdate();
-      closeDialog();
+    try {
+        // Immediately update the text-based profile data
+        await updateUserProfile(user.uid, data);
+        toast({
+            title: "Profile Updated",
+            description: "Your profile has been successfully updated.",
+        });
+
+        // Close dialog and refresh profile optimistically
+        onProfileUpdate();
+        closeDialog();
+
+        // Handle file upload in the background
+        if (avatarFile) {
+            const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
+            await updateUserProfile(user.uid, { avatarUrl });
+            // This second onProfileUpdate will refresh the UI with the new image
+            // once it's available.
+            onProfileUpdate(); 
+        }
+
     } catch (error) {
       toast({
         title: "Update Failed",
         description: "There was an error updating your profile.",
         variant: "destructive",
       });
-    } finally {
       setIsSaving(false);
-    }
+    } 
+    // No finally block to set isSaving to false, as the dialog closes immediately
   };
 
   return (
@@ -296,3 +304,5 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
     </DialogContent>
   );
 }
+
+    
