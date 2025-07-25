@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   projectId: "studio-w1rp4",
   appId: "1:967303337304:web:632c012dbe7dc43406812d",
   storageBucket: "studio-w1rp4.appspot.com",
