@@ -1,19 +1,22 @@
+
 "use client";
 
 import { StudentProfileCard } from "@/components/student-profile-card";
 import { jobs } from "@/lib/data";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
-import { getUserData, type UserData } from "@/lib/user-service";
+import { getUserData, updateUserProfile, uploadProfilePhoto, type UserData } from "@/lib/user-service";
 import { Icons } from "@/components/icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
@@ -33,10 +36,46 @@ export default function ProfilePage() {
     }
   }, [user, authLoading]);
 
-  const handleProfileUpdate = () => {
+  const handleProfileUpdate = async (updatedData: Partial<UserData>, avatarFile: File | null) => {
+    if (!user) return;
+
     setLoading(true);
-    fetchUserData(); // Refetch user data after update
+    
+    try {
+        // Update text-based fields immediately
+        await updateUserProfile(user.uid, updatedData);
+        toast({
+            title: "Profile Updated",
+            description: "Your profile information has been saved.",
+        });
+
+        // Close dialog and optimistically update UI with text changes
+        setEditDialogOpen(false);
+        setUserData(prev => prev ? { ...prev, ...updatedData } : null);
+
+        // Handle file upload in the background
+        if (avatarFile) {
+            const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
+            await updateUserProfile(user.uid, { avatarUrl });
+            // This second update will refresh the UI with the new image
+            setUserData(prev => prev ? { ...prev, avatarUrl } : null);
+             toast({
+                title: "Photo Updated",
+                description: "Your new profile photo has been saved.",
+            });
+        }
+    } catch (error) {
+         toast({
+            title: "Update Failed",
+            description: "There was an error updating your profile.",
+            variant: "destructive",
+        });
+    } finally {
+        // Refetch all data to be sure
+        await fetchUserData();
+    }
   }
+
 
   if (authLoading || loading) {
     return (
@@ -75,7 +114,11 @@ export default function ProfilePage() {
                 <DialogTrigger asChild>
                     <Button className="absolute top-4 right-4" variant="outline">Edit Profile</Button>
                 </DialogTrigger>
-                <EditProfileDialog user={userData} onProfileUpdate={handleProfileUpdate} closeDialog={() => setEditDialogOpen(false)}/>
+                <EditProfileDialog 
+                    user={userData} 
+                    onProfileUpdate={handleProfileUpdate} 
+                    closeDialog={() => setEditDialogOpen(false)}
+                />
             </Dialog>
             <StudentProfileCard student={userData} />
         </div>

@@ -23,8 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { updateUserProfile, uploadProfilePhoto, type UserData } from "@/lib/user-service";
+import { type UserData } from "@/lib/user-service";
 import { useState, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Icons } from "./icons";
@@ -36,7 +35,6 @@ const profileSchema = z.object({
   major: z.string().min(2, "Major must be at least 2 characters."),
   university: z.string().min(2, "University must be at least 2 characters."),
   bio: z.string().max(300, "Bio cannot exceed 300 characters.").optional(),
-  avatarUrl: z.string().optional(),
   skills: z.array(z.string()).optional(),
   experience: z.array(z.object({
     title: z.string(),
@@ -55,12 +53,11 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface EditProfileDialogProps {
   user: UserData;
-  onProfileUpdate: () => void;
+  onProfileUpdate: (updatedData: ProfileFormValues, avatarFile: File | null) => void;
   closeDialog: () => void;
 }
 
 export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditProfileDialogProps) {
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -77,7 +74,6 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
       major: user.major,
       university: user.university,
       bio: user.bio,
-      avatarUrl: user.avatarUrl,
       skills: user.skills,
       experience: user.experience,
       certifications: user.certifications,
@@ -113,37 +109,8 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSaving(true);
-
-    try {
-        // Immediately update the text-based profile data
-        await updateUserProfile(user.uid, data);
-        toast({
-            title: "Profile Updated",
-            description: "Your profile has been successfully updated.",
-        });
-
-        // Close dialog and refresh profile optimistically
-        onProfileUpdate();
-        closeDialog();
-
-        // Handle file upload in the background
-        if (avatarFile) {
-            const avatarUrl = await uploadProfilePhoto(user.uid, avatarFile);
-            await updateUserProfile(user.uid, { avatarUrl });
-            // This second onProfileUpdate will refresh the UI with the new image
-            // once it's available.
-            onProfileUpdate(); 
-        }
-
-    } catch (error) {
-      toast({
-        title: "Update Failed",
-        description: "There was an error updating your profile.",
-        variant: "destructive",
-      });
-      setIsSaving(false);
-    } 
-    // No finally block to set isSaving to false, as the dialog closes immediately
+    onProfileUpdate(data, avatarFile);
+    // The parent component now handles closing and state updates
   };
 
   return (
@@ -293,7 +260,7 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
           </ScrollArea>
           <DialogFooter className="mt-6">
             <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             </DialogClose>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Changes"}
@@ -304,5 +271,3 @@ export function EditProfileDialog({ user, onProfileUpdate, closeDialog }: EditPr
     </DialogContent>
   );
 }
-
-    
