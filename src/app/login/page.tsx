@@ -43,11 +43,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -79,9 +74,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/");
       // Create user document in the background after redirecting
       createUserDoc(userCredential.user.uid, userCredential.user.email || '');
+      router.push("/");
     } catch (error: any) {
       toast({
         title: "Sign Up Failed",
@@ -92,11 +87,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  if (!isClient) {
-    return null;
-  }
-
+  
   return (
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Tabs defaultValue="login" className="w-[400px]">
