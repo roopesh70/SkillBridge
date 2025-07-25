@@ -51,14 +51,20 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
       return;
     }
     setIsApplying(true);
+    const originalUserData = userData;
+
+    // Optimistic UI update
+    setUserData(prev => prev ? { ...prev, appliedJobs: [...prev.appliedJobs, job.id] } : { savedJobs: [], appliedJobs: [job.id]});
+
     try {
       await applyForJob(user.uid, job.id);
-      setUserData(prev => prev ? { ...prev, appliedJobs: [...prev.appliedJobs, job.id] } : { savedJobs: [], appliedJobs: [job.id]});
       toast({
         title: "Application Submitted!",
         description: `Your application for ${job.title} has been sent.`,
       });
     } catch(e) {
+      // Revert on error
+      setUserData(originalUserData);
        toast({
         title: "Application Failed",
         description: "There was an error submitting your application.",

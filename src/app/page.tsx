@@ -43,24 +43,32 @@ export default function Home() {
       router.push('/login');
       return;
     }
-
-    const isSaved = userData?.savedJobs.includes(jobId);
-
+  
+    const isSaved = userData?.savedJobs.includes(jobId) || false;
+    const originalUserData = userData;
+  
+    // Optimistically update UI
+    if (isSaved) {
+      setUserData(prev => prev ? { ...prev, savedJobs: prev.savedJobs.filter(id => id !== jobId) } : null);
+    } else {
+      setUserData(prev => prev ? { ...prev, savedJobs: [...prev.savedJobs, jobId] } : { savedJobs: [jobId], appliedJobs: [] });
+    }
+  
     try {
       if (isSaved) {
         await unsaveJob(user.uid, jobId);
-        setUserData(prev => prev ? { ...prev, savedJobs: prev.savedJobs.filter(id => id !== jobId) } : null);
       } else {
         await saveJob(user.uid, jobId);
-        setUserData(prev => prev ? { ...prev, savedJobs: [...prev.savedJobs, jobId] } : { savedJobs: [jobId], appliedJobs: [] });
       }
     } catch (error) {
-        console.error("Error toggling save state:", error);
-         toast({
-            title: "Error",
-            description: "Could not update saved jobs.",
-            variant: "destructive"
-        });
+      // Revert on error
+      setUserData(originalUserData);
+      console.error("Error toggling save state:", error);
+      toast({
+        title: "Error",
+        description: "Could not update saved jobs.",
+        variant: "destructive"
+      });
     }
   };
   
