@@ -136,5 +136,27 @@ export const jobs: Job[] = [
     description: "Assist our project managers in planning and executing projects. This is a great entry-level role for someone organized and with strong communication skills.",
     rating: 4.4,
     reviewCount: 12,
+  },
+  {
+    id: 7,
+    title: "Cybersecurity Intern",
+    company: "SecureNet",
+    location: "Washington, D.C.",
+    type: "Full-Time",
+    skills: ["Networking", "Python", "Linux"],
+    description: "Learn about network security, vulnerability assessments, and incident response in a real-world environment. Work with our security team to protect our infrastructure.",
+    rating: 4.8,
+    reviewCount: 19,
+  },
+  {
+    id: 8,
+    title: "Cloud Engineering Intern",
+    company: "InfraCloud",
+    location: "Seattle, WA",
+    type: "Part-Time",
+    skills: ["AWS", "Docker", "Terraform"],
+    description: "Gain hands-on experience with cloud infrastructure and DevOps practices. You will help build and maintain our scalable, cloud-native services on AWS.",
+    rating: 4.7,
+    reviewCount: 28,
   }
 ];
