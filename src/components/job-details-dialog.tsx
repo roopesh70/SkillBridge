@@ -23,9 +23,10 @@ interface JobDetailsDialogProps {
   studentProfile: string;
   isSaved: boolean;
   onSaveToggle: (jobId: number) => void;
+  isLoggedIn: boolean;
 }
 
-export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }: JobDetailsDialogProps) {
+export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle, isLoggedIn }: JobDetailsDialogProps) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -121,7 +122,11 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
         </div>
         <Separator />
          <div className="w-full">
-            <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
+            {isLoggedIn ? (
+                <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
+            ) : (
+                <div className="text-sm text-muted-foreground">Log in to see your AI Match Score</div>
+            )}
         </div>
       </div>
       <div className="flex justify-end gap-2">

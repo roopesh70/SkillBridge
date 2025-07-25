@@ -103,6 +103,7 @@ export default function Home() {
             studentProfile={studentProfileString} 
             isSaved={userData?.savedJobs.includes(job.id) || false}
             onSaveToggle={handleSaveToggle}
+            isLoggedIn={!!user}
           />
         ))}
       </div>

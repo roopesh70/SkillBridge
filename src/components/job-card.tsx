@@ -14,9 +14,10 @@ interface JobCardProps {
   studentProfile: string;
   isSaved: boolean;
   onSaveToggle: (jobId: number) => void;
+  isLoggedIn: boolean;
 }
 
-export function JobCard({ job, studentProfile, isSaved, onSaveToggle }: JobCardProps) {
+export function JobCard({ job, studentProfile, isSaved, onSaveToggle, isLoggedIn }: JobCardProps) {
   return (
     <Card className="flex flex-col h-full transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl">
       <CardHeader>
@@ -52,12 +53,16 @@ export function JobCard({ job, studentProfile, isSaved, onSaveToggle }: JobCardP
       </CardContent>
       <Separator className="my-4"/>
       <CardFooter className="flex flex-col items-start gap-4">
-        <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
+        {isLoggedIn ? (
+          <AiMatchDisplay jobDescription={job.description} studentProfile={studentProfile} />
+        ) : (
+          <div className="text-sm text-muted-foreground">Log in to see your AI Match Score</div>
+        )}
         <Dialog>
           <DialogTrigger asChild>
             <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
           </DialogTrigger>
-          <JobDetailsDialog job={job} studentProfile={studentProfile} isSaved={isSaved} onSaveToggle={onSaveToggle} />
+          <JobDetailsDialog job={job} studentProfile={studentProfile} isSaved={isSaved} onSaveToggle={onSaveToggle} isLoggedIn={isLoggedIn} />
         </Dialog>
       </CardFooter>
     </Card>
