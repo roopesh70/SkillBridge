@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
-import { studentProfile } from "@/lib/data";
 import { useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
@@ -17,12 +16,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getUserData, type UserData } from "@/lib/user-service";
 
 export function Header() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        const data = await getUserData(user.uid);
+        setUserData(data);
+      } else {
+        setUserData(null);
+      }
+      setLoading(false);
+    };
+    
+    if (!authLoading) {
+      fetchUserData();
+    }
+  }, [user, authLoading]);
 
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name.split(' ').map(n => n[0]).join('');
   };
 
@@ -32,25 +52,25 @@ export function Header() {
   };
 
   const renderUserAuth = () => {
-    if (loading) {
+    if (authLoading || loading) {
       return <Icons.spinner className="animate-spin" />;
     }
 
-    if (user) {
+    if (user && userData) {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={studentProfile.avatarUrl} alt={user.email || studentProfile.name} data-ai-hint="student portrait" />
-                <AvatarFallback>{user.email ? getInitials(user.email) : 'U'}</AvatarFallback>
+                <AvatarImage src={userData.avatarUrl} alt={userData.name} data-ai-hint="student portrait" />
+                <AvatarFallback>{getInitials(userData.name)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">My Account</p>
+                <p className="text-sm font-medium leading-none">{userData.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
                 </p>
