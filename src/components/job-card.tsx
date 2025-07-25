@@ -7,18 +7,28 @@ import { AiMatchDisplay } from "./ai-match-display";
 import { Separator } from "./ui/separator";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import { JobDetailsDialog } from "./job-details-dialog";
+import { cn } from "@/lib/utils";
 
 interface JobCardProps {
   job: Job;
   studentProfile: string;
+  isSaved: boolean;
+  onSaveToggle: (jobId: number) => void;
 }
 
-export function JobCard({ job, studentProfile }: JobCardProps) {
+export function JobCard({ job, studentProfile, isSaved, onSaveToggle }: JobCardProps) {
   return (
     <Card className="flex flex-col h-full transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl">
       <CardHeader>
-        <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
-        <CardDescription className="text-primary font-medium">{job.company}</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-xl font-bold">{job.title}</CardTitle>
+            <CardDescription className="text-primary font-medium">{job.company}</CardDescription>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => onSaveToggle(job.id)} className="shrink-0">
+            <Icons.star className={cn("h-5 w-5", isSaved ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="flex items-center text-sm text-muted-foreground mb-4 space-x-4">
@@ -47,7 +57,7 @@ export function JobCard({ job, studentProfile }: JobCardProps) {
           <DialogTrigger asChild>
             <Button className="w-full bg-primary hover:bg-primary/90">View Details</Button>
           </DialogTrigger>
-          <JobDetailsDialog job={job} studentProfile={studentProfile} />
+          <JobDetailsDialog job={job} studentProfile={studentProfile} isSaved={isSaved} onSaveToggle={onSaveToggle} />
         </Dialog>
       </CardFooter>
     </Card>

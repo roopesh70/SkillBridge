@@ -10,13 +10,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AiMatchDisplay } from "./ai-match-display";
 import type { Job } from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface JobDetailsDialogProps {
   job: Job;
   studentProfile: string;
+  isSaved: boolean;
+  onSaveToggle: (jobId: number) => void;
 }
 
-export function JobDetailsDialog({ job, studentProfile }: JobDetailsDialogProps) {
+export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }: JobDetailsDialogProps) {
+  const { toast } = useToast();
+
+  const handleApply = () => {
+    toast({
+      title: "Application Submitted!",
+      description: `Your application for ${job.title} has been sent.`,
+    });
+  };
+
   return (
     <DialogContent className="sm:max-w-[625px]">
       <DialogHeader>
@@ -57,8 +70,11 @@ export function JobDetailsDialog({ job, studentProfile }: JobDetailsDialogProps)
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="outline">Save Job</Button>
-        <Button className="bg-primary hover:bg-primary/90">Apply Now</Button>
+        <Button variant="outline" onClick={() => onSaveToggle(job.id)}>
+          <Icons.star className={cn("mr-2 h-4 w-4", isSaved ? "text-yellow-400 fill-yellow-400" : "")} />
+          {isSaved ? 'Saved' : 'Save Job'}
+        </Button>
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleApply}>Apply Now</Button>
       </div>
     </DialogContent>
   );
