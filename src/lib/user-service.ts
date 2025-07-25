@@ -1,9 +1,11 @@
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, DocumentData } from 'firebase/firestore';
+import { studentProfile, type Student } from './data';
 
-export interface UserData extends DocumentData {
+export interface UserData extends Student, DocumentData {
   savedJobs: number[];
   appliedJobs: number[];
+  uid: string;
 }
 
 export async function getUserData(userId: string): Promise<UserData | null> {
@@ -15,12 +17,22 @@ export async function getUserData(userId: string): Promise<UserData | null> {
   return null;
 }
 
-export async function createUserDoc(userId: string) {
+export async function createUserDoc(userId: string, email: string) {
   const userDocRef = doc(db, 'users', userId);
-  await setDoc(userDocRef, {
+  const newUser: UserData = {
+    ...studentProfile,
+    // You might want to use the email as a default name or leave it
+    name: email.split('@')[0], 
+    uid: userId,
     savedJobs: [],
     appliedJobs: [],
-  });
+  };
+  await setDoc(userDocRef, newUser);
+}
+
+export async function updateUserProfile(userId: string, data: Partial<Student>) {
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, data);
 }
 
 export async function saveJob(userId: string, jobId: number) {
