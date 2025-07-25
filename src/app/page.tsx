@@ -1,7 +1,7 @@
 "use client";
 
 import { JobCard } from "@/components/job-card";
-import { jobs, studentProfile } from "@/lib/data";
+import { jobs } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserData, saveJob, unsaveJob, type UserData } from "@/lib/user-service";
@@ -13,24 +13,30 @@ export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const studentProfileString = `Skills: ${studentProfile.skills.join(', ')}; Experience: ${studentProfile.experience.map(e => `${e.title} at ${e.company}`).join('; ')}; Preferences: flexible schedule, remote work.`;
   
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Combine student profile data into a single string for the AI prompt
+  const studentProfileString = userData 
+    ? `Skills: ${userData.skills.join(', ')}; Experience: ${userData.experience.map(e => `${e.title} at ${e.company}`).join('; ')}; Preferences: flexible schedule, remote work.`
+    : "";
+
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
       if (user) {
-        setLoading(true);
         const data = await getUserData(user.uid);
         setUserData(data);
-        setLoading(false);
-      } else if (!authLoading) {
-        setLoading(false);
-        setUserData(null); // Clear user data on logout
+      } else {
+        setUserData(null);
       }
+      setLoading(false); // Set loading to false after user check and data fetch
     };
-    fetchUserData();
+
+    if (!authLoading) {
+      fetchUserData();
+    }
   }, [user, authLoading]);
 
   const handleSaveToggle = async (jobId: number) => {
@@ -48,12 +54,14 @@ export default function Home() {
     const originalUserData = userData;
   
     // Optimistically update UI
-    if (isSaved) {
-      setUserData(prev => prev ? { ...prev, savedJobs: prev.savedJobs.filter(id => id !== jobId) } : null);
-    } else {
-      setUserData(prev => prev ? { ...prev, savedJobs: [...prev.savedJobs, jobId] } : { savedJobs: [jobId], appliedJobs: [] });
-    }
-  
+    const newSavedJobs = isSaved 
+      ? userData!.savedJobs.filter(id => id !== jobId)
+      : [...(userData?.savedJobs || []), jobId];
+    setUserData(prev => {
+        if (!prev) return null;
+        return { ...prev, savedJobs: newSavedJobs };
+    });
+
     try {
       if (isSaved) {
         await unsaveJob(user.uid, jobId);

@@ -27,19 +27,24 @@ interface JobDetailsDialogProps {
 
 export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }: JobDetailsDialogProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
       const fetchUserData = async () => {
+          setLoading(true);
           if (user) {
               const data = await getUserData(user.uid);
               setUserData(data);
           }
+          setLoading(false);
       }
-      fetchUserData();
-  }, [user]);
+      if (!authLoading) {
+        fetchUserData();
+      }
+  }, [user, authLoading]);
 
   const handleApply = async () => {
     if (!user) {
@@ -54,7 +59,10 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
     const originalUserData = userData;
 
     // Optimistic UI update
-    setUserData(prev => prev ? { ...prev, appliedJobs: [...prev.appliedJobs, job.id] } : { savedJobs: [], appliedJobs: [job.id]});
+    setUserData(prev => {
+        if (!prev) return null;
+        return { ...prev, appliedJobs: [...prev.appliedJobs, job.id] };
+    });
 
     try {
       await applyForJob(user.uid, job.id);
@@ -121,7 +129,7 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
           <Icons.star className={cn("mr-2 h-4 w-4", isSaved ? "text-yellow-400 fill-yellow-400" : "")} />
           {isSaved ? 'Saved' : 'Save Job'}
         </Button>
-        <Button className="bg-primary hover:bg-primary/90" onClick={handleApply} disabled={hasApplied || isApplying}>
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleApply} disabled={hasApplied || isApplying || loading || authLoading}>
             {hasApplied ? 'Applied' : (isApplying ? 'Submitting...' : 'Apply Now')}
         </Button>
       </div>

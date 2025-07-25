@@ -20,25 +20,24 @@ export default function ProfilePage() {
 
   const fetchUserData = async () => {
     if (user) {
-      setLoading(true);
       const data = await getUserData(user.uid);
       setUserData(data);
-      setLoading(false);
-    } else if (!authLoading) {
-      // Not logged in
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchUserData();
+    if (!authLoading) {
+        setLoading(true);
+        fetchUserData();
+    }
   }, [user, authLoading]);
 
   const handleProfileUpdate = () => {
     fetchUserData(); // Refetch user data after update
   }
 
-  if (authLoading || (loading && !userData)) {
+  if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
         <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
