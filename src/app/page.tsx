@@ -2,23 +2,61 @@
 
 import { JobCard } from "@/components/job-card";
 import { jobs, studentProfile } from "@/lib/data";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { getUserData, saveJob, unsaveJob, type UserData } from "@/lib/user-service";
+import { Icons } from "@/components/icons";
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const studentProfileString = `Skills: ${studentProfile.skills.join(', ')}; Experience: ${studentProfile.experience.map(e => `${e.title} at ${e.company}`).join('; ')}; Preferences: flexible schedule, remote work.`;
-  const [savedJobs, setSavedJobs] = useState<Set<number>>(new Set());
+  
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveToggle = (jobId: number) => {
-    setSavedJobs(prev => {
-      const newSavedJobs = new Set(prev);
-      if (newSavedJobs.has(jobId)) {
-        newSavedJobs.delete(jobId);
-      } else {
-        newSavedJobs.add(jobId);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        setLoading(true);
+        const data = await getUserData(user.uid);
+        setUserData(data);
+        setLoading(false);
+      } else if (!authLoading) {
+        setLoading(false);
       }
-      return newSavedJobs;
-    });
+    };
+    fetchUserData();
+  }, [user, authLoading]);
+
+  const handleSaveToggle = async (jobId: number) => {
+    if (!user) {
+      // or redirect to login
+      alert("Please log in to save jobs.");
+      return;
+    }
+
+    const isSaved = userData?.savedJobs.includes(jobId);
+
+    try {
+      if (isSaved) {
+        await unsaveJob(user.uid, jobId);
+        setUserData(prev => prev ? { ...prev, savedJobs: prev.savedJobs.filter(id => id !== jobId) } : null);
+      } else {
+        await saveJob(user.uid, jobId);
+        setUserData(prev => prev ? { ...prev, savedJobs: [...prev.savedJobs, jobId] } : { savedJobs: [jobId], appliedJobs: [] });
+      }
+    } catch (error) {
+        console.error("Error toggling save state:", error);
+    }
   };
+  
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
+        <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -32,7 +70,7 @@ export default function Home() {
             key={job.id} 
             job={job} 
             studentProfile={studentProfileString} 
-            isSaved={savedJobs.has(job.id)}
+            isSaved={userData?.savedJobs.includes(job.id) || false}
             onSaveToggle={handleSaveToggle}
           />
         ))}

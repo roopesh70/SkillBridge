@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DialogContent,
   DialogDescription,
@@ -12,6 +14,8 @@ import { AiMatchDisplay } from "./ai-match-display";
 import type { Job } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { applyForJob } from "@/lib/user-service";
 
 interface JobDetailsDialogProps {
   job: Job;
@@ -22,12 +26,30 @@ interface JobDetailsDialogProps {
 
 export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }: JobDetailsDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleApply = () => {
-    toast({
-      title: "Application Submitted!",
-      description: `Your application for ${job.title} has been sent.`,
-    });
+  const handleApply = async () => {
+    if (!user) {
+       toast({
+        title: "Please log in",
+        description: "You need to be logged in to apply for jobs.",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      await applyForJob(user.uid, job.id);
+      toast({
+        title: "Application Submitted!",
+        description: `Your application for ${job.title} has been sent.`,
+      });
+    } catch(e) {
+       toast({
+        title: "Application Failed",
+        description: "There was an error submitting your application.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
