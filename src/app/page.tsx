@@ -6,9 +6,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserData, saveJob, unsaveJob, type UserData } from "@/lib/user-service";
 import { Icons } from "@/components/icons";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
   const studentProfileString = `Skills: ${studentProfile.skills.join(', ')}; Experience: ${studentProfile.experience.map(e => `${e.title} at ${e.company}`).join('; ')}; Preferences: flexible schedule, remote work.`;
   
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -23,6 +27,7 @@ export default function Home() {
         setLoading(false);
       } else if (!authLoading) {
         setLoading(false);
+        setUserData(null); // Clear user data on logout
       }
     };
     fetchUserData();
@@ -30,8 +35,12 @@ export default function Home() {
 
   const handleSaveToggle = async (jobId: number) => {
     if (!user) {
-      // or redirect to login
-      alert("Please log in to save jobs.");
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to save jobs.",
+        variant: "destructive"
+      });
+      router.push('/login');
       return;
     }
 
@@ -47,6 +56,11 @@ export default function Home() {
       }
     } catch (error) {
         console.error("Error toggling save state:", error);
+         toast({
+            title: "Error",
+            description: "Could not update saved jobs.",
+            variant: "destructive"
+        });
     }
   };
   

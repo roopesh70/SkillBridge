@@ -15,7 +15,8 @@ import type { Job } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { applyForJob } from "@/lib/user-service";
+import { applyForJob, getUserData, type UserData } from "@/lib/user-service";
+import { useEffect, useState } from "react";
 
 interface JobDetailsDialogProps {
   job: Job;
@@ -27,6 +28,18 @@ interface JobDetailsDialogProps {
 export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }: JobDetailsDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+
+  useEffect(() => {
+      const fetchUserData = async () => {
+          if (user) {
+              const data = await getUserData(user.uid);
+              setUserData(data);
+          }
+      }
+      fetchUserData();
+  }, [user]);
 
   const handleApply = async () => {
     if (!user) {
@@ -37,8 +50,10 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
       });
       return;
     }
+    setIsApplying(true);
     try {
       await applyForJob(user.uid, job.id);
+      setUserData(prev => prev ? { ...prev, appliedJobs: [...prev.appliedJobs, job.id] } : { savedJobs: [], appliedJobs: [job.id]});
       toast({
         title: "Application Submitted!",
         description: `Your application for ${job.title} has been sent.`,
@@ -49,8 +64,12 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
         description: "There was an error submitting your application.",
         variant: "destructive"
       });
+    } finally {
+        setIsApplying(false);
     }
   };
+
+  const hasApplied = userData?.appliedJobs.includes(job.id) || false;
 
   return (
     <DialogContent className="sm:max-w-[625px]">
@@ -96,7 +115,9 @@ export function JobDetailsDialog({ job, studentProfile, isSaved, onSaveToggle }:
           <Icons.star className={cn("mr-2 h-4 w-4", isSaved ? "text-yellow-400 fill-yellow-400" : "")} />
           {isSaved ? 'Saved' : 'Save Job'}
         </Button>
-        <Button className="bg-primary hover:bg-primary/90" onClick={handleApply}>Apply Now</Button>
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleApply} disabled={hasApplied || isApplying}>
+            {hasApplied ? 'Applied' : (isApplying ? 'Submitting...' : 'Apply Now')}
+        </Button>
       </div>
     </DialogContent>
   );
