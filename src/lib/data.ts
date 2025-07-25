@@ -139,7 +139,7 @@ export const jobs: Job[] = [
   },
   {
     id: 7,
-    title: "Cybersecurity Intern",
+    title: "Cybersecurity peek",
     company: "SecureNet",
     location: "Washington, D.C.",
     type: "Full-Time",
